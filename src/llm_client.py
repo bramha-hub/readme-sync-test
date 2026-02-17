@@ -2,7 +2,7 @@
 LLM integration for generating documentation updates.
 """
 import os
-from google import genai
+import google.generativeai as genai
 from typing import Optional
 
 
@@ -29,10 +29,12 @@ class LLMClient:
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY environment variable not set")
         
-        # Initialize the modern Gemini client
-        self.client = genai.Client(api_key=self.api_key)
+        # Configure the genai library
+        genai.configure(api_key=self.api_key)
         
-        self.model_name = model
+        # Initialize the model
+        self.model = genai.GenerativeModel(model)
+        
         self.temperature = temperature
         self.max_tokens = max_tokens
     
@@ -47,13 +49,14 @@ class LLMClient:
             Generated documentation content
         """
         try:
-            response = self.client.models.generate_content(
-                model=self.model_name,
-                contents=prompt,
-                config={
-                    'temperature': self.temperature,
-                    'max_output_tokens': self.max_tokens,
-                }
+            generation_config = genai.GenerationConfig(
+                temperature=self.temperature,
+                max_output_tokens=self.max_tokens,
+            )
+            
+            response = self.model.generate_content(
+                prompt,
+                generation_config=generation_config
             )
             
             if not response or not response.text:
