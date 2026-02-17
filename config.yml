@@ -1,0 +1,40 @@
+# README-Sync Configuration
+
+# Files to monitor for changes
+monitored_extensions:
+  - .py
+  - .js
+  - .ts
+  - .jsx
+  - .tsx
+
+# Documentation files to update
+documentation_files:
+  - README.md
+  - docs/API.md
+
+# Paths to exclude from analysis
+exclude_patterns:
+  - "**/test_*.py"
+  - "**/*_test.py"
+  - "**/tests/**"
+  - "**/node_modules/**"
+  - "**/__pycache__/**"
+  - "**/migrations/**"
+  - "**/dist/**"
+  - "**/build/**"
+
+# LLM Configuration
+llm:
+  provider: gemini
+  model: models/gemini-2.5-flash  # Latest Gemini model
+  temperature: 0.3
+  max_tokens: 4096
+
+# Documentation update rules
+update_rules:
+  preserve_tone: true
+  preserve_style: true
+  update_technical_details: true
+  update_examples: true
+  add_breaking_changes_section: true
