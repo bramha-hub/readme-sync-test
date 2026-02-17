@@ -2,7 +2,7 @@
 Prompt builder for generating structured prompts for the LLM.
 """
 from typing import List, Dict
-from .parsers.base import FileAnalysis
+from parsers.base import FileAnalysis
 
 
 class PromptBuilder:
