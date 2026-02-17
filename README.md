@@ -174,6 +174,49 @@ for func in analysis.functions:
     print(f"{func.name}({', '.join(func.parameters)})")
 ```
 
+```
+
+## 📚 API Reference
+
+### Test Workflow Module
+
+The `test_workflow.py` module provides example functions for testing README-Sync:
+
+#### `greet_user(name: str) -> str`
+
+Greet a user by name.
+
+**Parameters:**
+- `name` (str): The name of the user to greet
+
+**Returns:**
+- str: A greeting message
+
+**Example:**
+```python
+from test_workflow import greet_user
+message = greet_user("Alice")
+print(message)  # "Hello, Alice! Welcome to README-Sync!"
+```
+
+#### `calculate_total(items: list[float]) -> float`
+
+Calculate the total sum of items.
+
+**Parameters:**
+- `items` (list[float]): List of numbers to sum
+
+**Returns:**
+- float: The total sum of all items
+
+#### `DocumentationHelper`
+
+Helper class for documentation operations.
+
+**Methods:**
+- `__init__(project_name: str)`: Initialize with project name
+- `update_docs(content: str) -> bool`: Update documentation with new content
+
 ## 🤝 Contributing
 
 Contributions welcome! Areas for improvement:
