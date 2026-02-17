@@ -5,7 +5,7 @@ For production use, consider using proper parsers like esprima or @babel/parser.
 import re
 from typing import List, Optional
 
-from .base import BaseParser, FileAnalysis, FunctionInfo, ClassInfo
+from parsers.base import BaseParser, FileAnalysis, FunctionInfo, ClassInfo
 
 
 class JavaScriptParser(BaseParser):

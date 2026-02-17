@@ -5,7 +5,7 @@ import ast
 from typing import List, Optional
 from pathlib import Path
 
-from .base import BaseParser, FileAnalysis, FunctionInfo, ClassInfo
+from parsers.base import BaseParser, FileAnalysis, FunctionInfo, ClassInfo
 
 
 class PythonParser(BaseParser):

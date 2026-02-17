@@ -2,9 +2,9 @@
 Parser factory for selecting the appropriate parser based on file type.
 """
 from typing import Optional, List
-from .base import BaseParser, FileAnalysis
-from .python_parser import PythonParser
-from .javascript_parser import JavaScriptParser
+from parsers.base import BaseParser, FileAnalysis
+from parsers.python_parser import PythonParser
+from parsers.javascript_parser import JavaScriptParser
 
 
 class ParserFactory:
