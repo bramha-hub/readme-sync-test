@@ -5,16 +5,19 @@ This file is used to test the README-Sync workflow.
 """
 
 
-def greet_user(name: str) -> str:
+def greet_user(name: str, greeting_style: str = "formal") -> str:
     """
-    Greet a user by name.
+    Greet a user by name with customizable style.
     
     Args:
         name: The name of the user to greet
+        greeting_style: Style of greeting - 'formal' or 'casual'
         
     Returns:
-        A greeting message
+        A greeting message in the specified style
     """
+    if greeting_style == "casual":
+        return f"Hey {name}! Welcome to README-Sync!"
     return f"Hello, {name}! Welcome to README-Sync!"
 
 
