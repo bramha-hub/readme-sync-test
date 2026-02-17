@@ -197,4 +197,4 @@ Built with:
 
 ---
 
-**Made with ❤️ for developers who hate outdated docs**
+**Made for developers who hate outdated docs**
