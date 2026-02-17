@@ -38,13 +38,26 @@ jobs:
           git config --global user.name "README-Sync Bot"
           git config --global user.email "readme-sync[bot]@users.noreply.github.com"
       
+      - name: Check for code changes
+        id: code_changes
+        run: |
+          # Check if there are any Python/JS/TS files changed
+          if git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -E '\.(py|js|ts|jsx|tsx)$'; then
+            echo "has_code_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_code_changes=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+      
       - name: Run README Sync
+        if: steps.code_changes.outputs.has_code_changes == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           python src/sync_readme.py
+        continue-on-error: true
       
       - name: Check for changes
         id: check_changes
