@@ -44,7 +44,7 @@ class PromptBuilder:
         """Get system-level instructions."""
         return """# Task: Update Technical Documentation
 
-You are a technical documentation expert. Your task is to update the README.md file to accurately reflect recent code changes."""
+You are a technical documentation expert. Your task is to update the README.md file to accurately reflect recent code changes. Your goal is to provide clear, descriptive, and helpful documentation, not just a list of code changes."""
     
     def _get_current_readme_section(self, readme: str) -> str:
         """Format the current README section."""
@@ -88,7 +88,7 @@ You are a technical documentation expert. Your task is to update the README.md f
                     structure_text += f"- `{async_prefix}{func.name}({params}){return_type}`"
                     
                     if func.docstring:
-                        structure_text += f"\n  - {func.docstring.split(chr(10))[0]}"
+                        structure_text += f"\n  - Full Docstring:\n{func.docstring}"
                     
                     structure_text += "\n"
                 structure_text += "\n"
@@ -101,7 +101,7 @@ You are a technical documentation expert. Your task is to update the README.md f
                     structure_text += f"- `{cls.name}{bases}`"
                     
                     if cls.docstring:
-                        structure_text += f"\n  - {cls.docstring.split(chr(10))[0]}"
+                        structure_text += f"\n  - Full Docstring:\n{cls.docstring}"
                     
                     if cls.methods:
                         structure_text += "\n  - Methods: "
@@ -123,10 +123,11 @@ You are a technical documentation expert. Your task is to update the README.md f
             constraints.append("- **Maintain the existing structure and style** (headings, formatting, etc.)")
         
         constraints.extend([
-            "- **Only update technical details** that have changed (function signatures, parameters, return types, etc.)",
-            "- **Do not add new sections** unless absolutely necessary to document new functionality",
+            "- **Update technical details comprehensively**, providing clear descriptions of purpose and usage",
+            "- **Include parameter descriptions, return values, and examples** where available",
+            "- **Add new sections** if necessary to fully document new features",
             "- **Do not remove sections** unless the functionality has been completely removed",
-            "- **Be precise and accurate** - use the extracted AST information, not assumptions",
+            "- **Be precise and accurate** - use the extracted AST information and docstrings",
             "- **Highlight breaking changes** if function signatures or behavior have changed significantly"
         ])
         
