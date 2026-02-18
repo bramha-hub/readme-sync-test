@@ -50,6 +50,7 @@ jobs:
         continue-on-error: true
       
       - name: Run README Sync
+        id: sync_step
         if: steps.code_changes.outputs.has_code_changes == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -98,10 +99,10 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "docs: Update README based on code changes"
+          commit-message: "docs: Update README (${{ steps.sync_step.outputs.change_summary }})"
           branch: docs/readme-sync-${{ github.run_number }}
           delete-branch: true
-          title: "[AI] Update README based on recent code changes"
+          title: "docs: ${{ steps.sync_step.outputs.change_summary }}"
           body: |
             ## 🤖 Automated Documentation Update
             
@@ -109,6 +110,7 @@ jobs:
             
             ### Changes Detected
             The following code changes triggered this documentation update:
+            - **Summary**: ${{ steps.sync_step.outputs.change_summary }}
             - Modified files analyzed with AST parsing
             - Function signatures and docstrings extracted
             - README sections updated to reflect current implementation

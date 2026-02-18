@@ -142,8 +142,22 @@ class ReadmeSync:
             return
         
         print(f"📝 Found {len(changed_files)} changed file(s):")
+        summary_list = []
         for f in changed_files:
             print(f"   - {f}")
+            summary_list.append(os.path.basename(f))
+        
+        # Generate summary string for PR title
+        if summary_list:
+            if len(summary_list) > 3:
+                summary = f"Updated {', '.join(summary_list[:3])} and {len(summary_list)-3} others"
+            else:
+                summary = f"Updated {', '.join(summary_list)}"
+            
+            # Write to GITHUB_OUTPUT if running in Actions
+            if os.getenv('GITHUB_OUTPUT'):
+                with open(os.getenv('GITHUB_OUTPUT'), 'a') as f:
+                    f.write(f"change_summary={summary}\n")
         
         # Parse changed files
         print("\n🔬 Parsing code structure...")
