@@ -4,6 +4,7 @@ Main script for README synchronization.
 import os
 import sys
 import yaml
+import datetime
 import subprocess
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -163,10 +164,12 @@ class ReadmeSync:
             current_content = self.read_file(doc_file)
             
             # Build prompt
+            current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             prompt = self.prompt_builder.build_update_prompt(
                 current_readme=current_content,
                 file_changes=file_changes,
-                parsed_files=parsed_files
+                parsed_files=parsed_files,
+                current_time=current_time
             )
             
             # Generate update

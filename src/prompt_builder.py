@@ -16,7 +16,8 @@ class PromptBuilder:
         self,
         current_readme: str,
         file_changes: List[Dict[str, str]],
-        parsed_files: List[FileAnalysis]
+        parsed_files: List[FileAnalysis],
+        current_time: str = ""
     ) -> str:
         """
         Build a prompt for updating documentation.
@@ -31,9 +32,11 @@ class PromptBuilder:
         """
         prompt_parts = [
             self._get_system_instructions(),
+            f"Current Time: {current_time}",
             self._get_current_readme_section(current_readme),
             self._get_code_changes_section(file_changes),
             self._get_parsed_structure_section(parsed_files),
+            self._get_changelog_instructions(current_time),
             self._get_constraints_section(),
             self._get_output_instructions()
         ]
@@ -112,6 +115,18 @@ You are a technical documentation expert. Your task is to update the README.md f
         
         return structure_text
     
+    def _get_changelog_instructions(self, current_time: str) -> str:
+        """Get instructions for the changelog section."""
+        return f"""## Changelog Instructions
+        
+1.  **Check for an existing 'Changelog' or 'Recent Updates' section.**
+2.  If it exists, **keep ALL previous entries**. Do NOT remove them.
+3.  Add a new entry at the top of the section with the timestamp: **{current_time}**.
+4.  List the key changes made in this update under the new timestamp.
+5.  If the section does not exist, create it at the end of the README.
+6.  Also ensure there is a descriptive 'Project Overview' or 'Description' section at the beginning. If not, create one based on the code analysis.
+"""
+    
     def _get_constraints_section(self) -> str:
         """Get constraints for the update."""
         constraints = ["## Constraints"]
@@ -127,7 +142,7 @@ You are a technical documentation expert. Your task is to update the README.md f
             "- **Include parameter descriptions, return values, and examples** where available",
             "- **Add new sections** if necessary to fully document new features",
             "- **Do not remove sections** unless the functionality has been completely removed",
-            "- **Be precise and accurate** - use the extracted AST information and docstrings",
+            "- **Be descriptive and detailed** - generate high-quality, comprehensive documentation",
             "- **Highlight breaking changes** if function signatures or behavior have changed significantly"
         ])
         
