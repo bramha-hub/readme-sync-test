@@ -41,9 +41,20 @@ jobs:
       - name: Check for code changes
         id: code_changes
         run: |
+          # Determine the base reference for comparison
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # For PRs, compare against the base branch
+            BASE_REF="${{ github.event.pull_request.base.sha }}"
+          else
+            # For pushes, compare against previous commit
+            BASE_REF="HEAD~1"
+          fi
+          
           # Check if there are any Python/JS/TS files changed
-          if git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -E '\.(py|js|ts|jsx|tsx)$'; then
+          if git diff --name-only $BASE_REF HEAD 2>/dev/null | grep -E '\.(py|js|ts|jsx|tsx)$'; then
             echo "has_code_changes=true" >> $GITHUB_OUTPUT
+            echo "Changed files:" >> $GITHUB_OUTPUT
+            git diff --name-only $BASE_REF HEAD | grep -E '\.(py|js|ts|jsx|tsx)$' >> $GITHUB_OUTPUT || true
           else
             echo "has_code_changes=false" >> $GITHUB_OUTPUT
           fi
@@ -60,40 +71,99 @@ jobs:
           python src/sync_readme.py
         continue-on-error: true
       
-      - name: Post PR Comment
-        if: github.event_name == 'pull_request' && steps.code_changes.outputs.has_code_changes == 'true'
+      - name: Check for README changes
+        id: check_readme_changes
+        if: steps.code_changes.outputs.has_code_changes == 'true'
+        run: |
+          # Check if README.md was modified
+          if git diff --quiet README.md; then
+            echo "has_readme_changes=false" >> $GITHUB_OUTPUT
+            echo "readme_content=" >> $GITHUB_OUTPUT
+          else
+            echo "has_readme_changes=true" >> $GITHUB_OUTPUT
+            # Get the updated README content
+            README_CONTENT=$(cat README.md)
+            # Escape for GitHub output (multiline)
+            {
+              echo 'readme_content<<EOF'
+              echo "$README_CONTENT"
+              echo EOF
+            } >> $GITHUB_OUTPUT
+            # Also get diff for PR comment
+            git diff README.md > readme_diff.txt || true
+          fi
+        continue-on-error: true
+      
+      - name: Post PR Comment with README Preview
+        if: github.event_name == 'pull_request' && steps.check_readme_changes.outputs.has_readme_changes == 'true'
         uses: actions/github-script@v7
         with:
           script: |
+            const fs = require('fs');
             try {
-              const { execSync } = require('child_process');
-              // Check if README.md has changes
-              const status = execSync('git status --porcelain README.md').toString();
+              let diffContent = '';
+              let readmeContent = '';
               
-              if (status.includes('README.md')) {
-                const diff = execSync('git diff README.md').toString();
-                const body = `### 🤖 README-Sync Preview\n\nChanges detected in \`README.md\`. Here is the diff:\n\n<details>\n<summary>Click to view changes</summary>\n\n\`\`\`diff\n${diff}\n\`\`\`\n\n</details>\n\n*These changes will be applied when merged.*`;
-                
-                await github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: body
-                });
+              // Try to read diff file
+              if (fs.existsSync('readme_diff.txt')) {
+                diffContent = fs.readFileSync('readme_diff.txt', 'utf8');
               }
+              
+              // Get updated README content
+              if (fs.existsSync('README.md')) {
+                readmeContent = fs.readFileSync('README.md', 'utf8');
+              }
+              
+              let body = `### 🤖 README-Sync Preview\n\n`;
+              body += `This PR contains automated documentation updates based on code changes.\n\n`;
+              
+              if (diffContent) {
+                body += `<details>\n<summary>📝 View Changes (Diff)</summary>\n\n\`\`\`diff\n${diffContent}\n\`\`\`\n\n</details>\n\n`;
+              }
+              
+              if (readmeContent) {
+                body += `<details>\n<summary>📖 View Updated README Content</summary>\n\n\`\`\`markdown\n${readmeContent}\n\`\`\`\n\n</details>\n\n`;
+              }
+              
+              body += `*Review the changes above. These will be applied when this PR is merged.*`;
+              
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
             } catch (error) {
               console.error('Error posting comment:', error);
             }
 
       - name: Check for changes
         id: check_changes
+        if: steps.code_changes.outputs.has_code_changes == 'true'
         run: |
-          if git diff --quiet; then
+          # Check if there are any uncommitted changes (including README)
+          if git diff --quiet && git diff --cached --quiet; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
+            # List changed files
+            git status --short >> $GITHUB_OUTPUT || true
           fi
       
+      - name: Prepare PR Body with README Content
+        id: prepare_pr_body
+        if: steps.check_changes.outputs.has_changes == 'true' && steps.check_readme_changes.outputs.has_readme_changes == 'true'
+        run: |
+          # Read README content and escape for GitHub output
+          if [ -f README.md ]; then
+            {
+              echo 'pr_readme_content<<EOF'
+              cat README.md
+              echo EOF
+            } >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
       - name: Create Pull Request
         if: steps.check_changes.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v6
@@ -115,10 +185,23 @@ jobs:
             - Function signatures and docstrings extracted
             - README sections updated to reflect current implementation
             
+            ### 📖 Updated README Preview
+            
+            <details>
+            <summary>Click to view the complete updated README</summary>
+            
+            ```markdown
+            ${{ steps.prepare_pr_body.outputs.pr_readme_content }}
+            ```
+            
+            </details>
+            
             ### Review Checklist
             - [ ] Technical accuracy of updated documentation
             - [ ] Tone and style consistency maintained
             - [ ] No unintended changes to other sections
+            - [ ] Changelog history is preserved (previous entries remain)
+            - [ ] All previous README content is retained
             
             ---
             *Generated by [README-Sync](https://github.com/${{ github.repository }})*

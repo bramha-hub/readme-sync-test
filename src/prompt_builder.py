@@ -117,14 +117,21 @@ You are a technical documentation expert. Your task is to update the README.md f
     
     def _get_changelog_instructions(self, current_time: str) -> str:
         """Get instructions for the changelog section."""
-        return f"""## Changelog Instructions
+        return f"""## Changelog Instructions - CRITICAL: Preserve All History
         
-1.  **Check for an existing 'Changelog' or 'Recent Updates' section.**
-2.  If it exists, **keep ALL previous entries**. Do NOT remove them.
-3.  Add a new entry at the top of the section with the timestamp: **{current_time}**.
-4.  List the key changes made in this update under the new timestamp.
-5.  If the section does not exist, create it at the end of the README.
+**MANDATORY RULES FOR CHANGELOG:**
+1.  **NEVER DELETE OR MODIFY existing changelog entries** - All previous entries must remain exactly as they are
+2.  **Check for an existing 'Changelog', 'Recent Updates', 'History', or 'Version History' section**
+3.  If a changelog section exists:
+    - **Keep ALL previous entries completely intact** - do not edit, modify, or remove any existing entries
+    - **Add a NEW entry at the TOP** of the changelog section with timestamp: **{current_time}**
+    - List ONLY the new changes under this new timestamp entry
+    - Maintain the same format and style as existing entries
+4.  If no changelog section exists, create a new "## 📝 Changelog" section at the end of the README
+5.  **Preserve all timestamps and dates** from previous entries - they are historical records
 6.  Also ensure there is a descriptive 'Project Overview' or 'Description' section at the beginning. If not, create one based on the code analysis.
+
+**REMEMBER**: The changelog is a historical record - never remove or alter past entries!
 """
     
     def _get_constraints_section(self) -> str:
@@ -138,12 +145,16 @@ You are a technical documentation expert. Your task is to update the README.md f
             constraints.append("- **Maintain the existing structure and style** (headings, formatting, etc.)")
         
         constraints.extend([
+            "- **CRITICAL: Preserve ALL existing README content** - Never delete or remove any existing sections, paragraphs, or content",
+            "- **Only ADD or UPDATE content** - Never remove historical information, changelog entries, or previous documentation",
             "- **Update technical details comprehensively**, providing clear descriptions of purpose and usage",
             "- **Include parameter descriptions, return values, and examples** where available",
             "- **Add new sections** if necessary to fully document new features",
-            "- **Do not remove sections** unless the functionality has been completely removed",
+            "- **Do not remove sections** unless the functionality has been completely removed (and even then, mark as deprecated rather than removing)",
             "- **Be descriptive and detailed** - generate high-quality, comprehensive documentation",
-            "- **Highlight breaking changes** if function signatures or behavior have changed significantly"
+            "- **Highlight breaking changes** if function signatures or behavior have changed significantly",
+            "- **Maintain chronological order** in changelog sections - newest entries at top, oldest at bottom",
+            "- **Preserve all formatting, emojis, and styling** from the original README"
         ])
         
         return "\n".join(constraints)

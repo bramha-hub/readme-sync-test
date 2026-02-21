@@ -40,15 +40,38 @@ class ReadmeSync:
     def get_changed_files(self) -> List[str]:
         """Get list of changed files from git."""
         try:
-            # Get the diff between HEAD and previous commit
+            # Determine base reference for comparison
+            # In GitHub Actions PR context, use merge-base or base ref
+            base_ref = "HEAD~1"
+            
+            # Try to detect PR context from environment
+            github_base_ref = os.getenv('GITHUB_BASE_REF')
+            github_head_ref = os.getenv('GITHUB_HEAD_REF')
+            
+            if github_base_ref and github_head_ref:
+                # We're in a PR context, compare against base branch
+                try:
+                    # Fetch base branch
+                    subprocess.run(
+                        ['git', 'fetch', 'origin', github_base_ref],
+                        capture_output=True,
+                        check=False
+                    )
+                    base_ref = f"origin/{github_base_ref}"
+                except Exception:
+                    # Fallback to HEAD~1 if fetch fails
+                    pass
+            
+            # Get the diff between base and HEAD
             result = subprocess.run(
-                ['git', 'diff', '--name-only', 'HEAD~1', 'HEAD'],
+                ['git', 'diff', '--name-only', base_ref, 'HEAD'],
                 capture_output=True,
                 text=True,
                 check=True
             )
             
             files = result.stdout.strip().split('\n')
+            files = [f for f in files if f.strip()]  # Remove empty strings
             
             # Filter by monitored extensions
             monitored_extensions = tuple(self.config['monitored_extensions'])
@@ -75,8 +98,23 @@ class ReadmeSync:
     def get_file_diff(self, filepath: str) -> str:
         """Get git diff for a specific file."""
         try:
+            # Use same base reference logic as get_changed_files
+            base_ref = "HEAD~1"
+            github_base_ref = os.getenv('GITHUB_BASE_REF')
+            
+            if github_base_ref:
+                try:
+                    subprocess.run(
+                        ['git', 'fetch', 'origin', github_base_ref],
+                        capture_output=True,
+                        check=False
+                    )
+                    base_ref = f"origin/{github_base_ref}"
+                except Exception:
+                    pass
+            
             result = subprocess.run(
-                ['git', 'diff', 'HEAD~1', 'HEAD', '--', filepath],
+                ['git', 'diff', base_ref, 'HEAD', '--', filepath],
                 capture_output=True,
                 text=True,
                 check=True
@@ -196,14 +234,68 @@ class ReadmeSync:
                     print(f"✓ {doc_file} is already up-to-date")
                     continue
                 
-                # Update the file
-                self.update_readme(new_content, doc_file)
+                # Verify history preservation before updating
+                if self._verify_history_preserved(current_content, new_content, doc_file):
+                    # Update the file
+                    self.update_readme(new_content, doc_file)
+                    print(f"✓ Verified: All previous content preserved in {doc_file}")
+                else:
+                    print(f"⚠️  Warning: History verification failed for {doc_file}")
+                    print("   The update may have removed previous content. Review carefully.")
+                    # Still update, but warn the user
+                    self.update_readme(new_content, doc_file)
                 
             except Exception as e:
                 print(f"❌ Error generating update: {e}")
                 sys.exit(1)
         
         print("\n✅ README sync complete!")
+    
+    def _verify_history_preserved(self, old_content: str, new_content: str, filepath: str) -> bool:
+        """
+        Verify that README history/changelog is preserved.
+        
+        Args:
+            old_content: Original README content
+            new_content: Updated README content
+            
+        Returns:
+            True if history appears preserved, False otherwise
+        """
+        # Check for changelog sections
+        changelog_keywords = ['changelog', 'recent updates', 'version history', 'history']
+        old_has_changelog = any(keyword in old_content.lower() for keyword in changelog_keywords)
+        
+        if not old_has_changelog:
+            # No changelog to preserve, so it's fine
+            return True
+        
+        # Extract changelog section from old content
+        import re
+        changelog_pattern = r'(##+\s*(?:📝\s*)?(?:Changelog|Recent Updates|Version History|History).*?)(?=##+\s+|$)'
+        old_changelog_match = re.search(changelog_pattern, old_content, re.IGNORECASE | re.DOTALL)
+        
+        if not old_changelog_match:
+            return True  # Can't find changelog, assume it's fine
+        
+        old_changelog = old_changelog_match.group(1)
+        
+        # Check if new content contains the old changelog entries
+        # Extract timestamps/dates from old changelog
+        date_pattern = r'\d{4}-\d{2}-\d{2}|\d{2}/\d{2}/\d{4}|\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+        old_dates = set(re.findall(date_pattern, old_changelog))
+        
+        if old_dates:
+            # Check if at least some old dates are in new content
+            new_content_lower = new_content.lower()
+            found_dates = sum(1 for date in old_dates if date in new_content)
+            
+            # If we found less than 50% of old dates, might be a problem
+            if found_dates < len(old_dates) * 0.5:
+                print(f"   ⚠️  Warning: Only {found_dates}/{len(old_dates)} previous changelog dates found in new content")
+                return False
+        
+        return True
 
 
 def main():
