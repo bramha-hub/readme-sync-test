@@ -91,7 +91,8 @@ from pathlib import Path
 '''
         analysis = self.parser.parse("test.py", code)
         
-        self.assertEqual(len(analysis.imports), 3)
+        # from typing import List, Dict produces 2 entries (one per name)
+        self.assertEqual(len(analysis.imports), 4)
         self.assertIn("import os", analysis.imports)
 
 

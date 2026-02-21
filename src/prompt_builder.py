@@ -1,7 +1,13 @@
 """
 Prompt builder for generating structured prompts for the LLM.
 """
+import os
+import sys
 from typing import List, Dict
+
+# Ensure parsers can be imported when this module is loaded from src/
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from parsers.base import FileAnalysis
 
 

@@ -1,7 +1,13 @@
 """
 Parser factory for selecting the appropriate parser based on file type.
 """
+import os
+import sys
 from typing import Optional, List
+
+# Ensure sub-modules can be found
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from parsers.base import BaseParser, FileAnalysis
 from parsers.python_parser import PythonParser
 from parsers.javascript_parser import JavaScriptParser

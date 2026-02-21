@@ -47,18 +47,28 @@ jobs:
             BASE_REF="${{ github.event.pull_request.base.sha }}"
           else
             # For pushes, compare against previous commit
-            BASE_REF="HEAD~1"
+            # Handle the case where HEAD~1 doesn't exist (first commit)
+            if git rev-parse HEAD~1 >/dev/null 2>&1; then
+              BASE_REF="HEAD~1"
+            else
+              # First commit - compare against empty tree
+              BASE_REF="$(git hash-object -t tree /dev/null)"
+            fi
           fi
           
+          echo "base_ref=$BASE_REF" >> $GITHUB_OUTPUT
+          
           # Check if there are any Python/JS/TS files changed
-          if git diff --name-only $BASE_REF HEAD 2>/dev/null | grep -E '\.(py|js|ts|jsx|tsx)$'; then
+          CHANGED_FILES=$(git diff --name-only "$BASE_REF" HEAD 2>/dev/null | grep -E '\.(py|js|ts|jsx|tsx)$' || true)
+          
+          if [ -n "$CHANGED_FILES" ]; then
             echo "has_code_changes=true" >> $GITHUB_OUTPUT
-            echo "Changed files:" >> $GITHUB_OUTPUT
-            git diff --name-only $BASE_REF HEAD | grep -E '\.(py|js|ts|jsx|tsx)$' >> $GITHUB_OUTPUT || true
+            echo "Changed code files detected:"
+            echo "$CHANGED_FILES"
           else
             echo "has_code_changes=false" >> $GITHUB_OUTPUT
+            echo "No code files changed."
           fi
-        continue-on-error: true
       
       - name: Run README Sync
         id: sync_step
@@ -76,23 +86,13 @@ jobs:
         if: steps.code_changes.outputs.has_code_changes == 'true'
         run: |
           # Check if README.md was modified
-          if git diff --quiet README.md; then
+          if git diff --quiet README.md 2>/dev/null; then
             echo "has_readme_changes=false" >> $GITHUB_OUTPUT
-            echo "readme_content=" >> $GITHUB_OUTPUT
           else
             echo "has_readme_changes=true" >> $GITHUB_OUTPUT
-            # Get the updated README content
-            README_CONTENT=$(cat README.md)
-            # Escape for GitHub output (multiline)
-            {
-              echo 'readme_content<<EOF'
-              echo "$README_CONTENT"
-              echo EOF
-            } >> $GITHUB_OUTPUT
-            # Also get diff for PR comment
+            # Save diff for PR comment
             git diff README.md > readme_diff.txt || true
           fi
-        continue-on-error: true
       
       - name: Post PR Comment with README Preview
         if: github.event_name == 'pull_request' && steps.check_readme_changes.outputs.has_readme_changes == 'true'
@@ -146,8 +146,9 @@ jobs:
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
-            # List changed files
-            git status --short >> $GITHUB_OUTPUT || true
+            # List changed files for logging
+            echo "Changed files:"
+            git status --short
           fi
       
       - name: Prepare PR Body with README Content

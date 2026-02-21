@@ -9,6 +9,9 @@ import subprocess
 from pathlib import Path
 from typing import List, Dict, Optional
 
+# Add the src directory to path so imports work when run as `python src/sync_readme.py`
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from parsers import ParserFactory
 from parsers.base import FileAnalysis
 from prompt_builder import PromptBuilder

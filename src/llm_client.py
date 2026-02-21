@@ -2,8 +2,9 @@
 LLM integration for generating documentation updates.
 """
 import os
-import google.generativeai as genai
 from typing import Optional
+from google import genai
+from google.genai import types
 
 
 class LLMClient:
@@ -29,12 +30,9 @@ class LLMClient:
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY environment variable not set")
         
-        # Configure the genai library
-        genai.configure(api_key=self.api_key)
-        
-        # Initialize the model
-        self.model = genai.GenerativeModel(model)
-        
+        # Initialize the genai client with the new SDK
+        self.client = genai.Client(api_key=self.api_key)
+        self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
     
@@ -49,14 +47,13 @@ class LLMClient:
             Generated documentation content
         """
         try:
-            generation_config = genai.GenerationConfig(
-                temperature=self.temperature,
-                max_output_tokens=self.max_tokens,
-            )
-            
-            response = self.model.generate_content(
-                prompt,
-                generation_config=generation_config
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=self.temperature,
+                    max_output_tokens=self.max_tokens,
+                ),
             )
             
             if not response or not response.text:

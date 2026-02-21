@@ -2,11 +2,15 @@
 Test the LLM client with a real API call.
 """
 import os
+import sys
+
+# Add src to path
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src'))
 
 # Set API key
-os.environ['GEMINI_API_KEY'] = 'AIzaSyD-fg8EnsNPPoGeMcgqzjlZlPWbGCswL-s'
+os.environ['GEMINI_API_KEY'] = os.getenv('GEMINI_API_KEY', '')
 
-from src.llm_client import LLMClient
+from llm_client import LLMClient
 
 print("🧪 Testing LLM Client with Gemini API...\n")
 
