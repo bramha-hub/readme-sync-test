@@ -29,7 +29,7 @@ llm:
   provider: gemini
   model: models/gemini-2.5-flash  # Latest Gemini model
   temperature: 0.3
-  max_tokens: 4096
+  max_tokens: 16384
 
 # Documentation update rules
 update_rules:

@@ -53,7 +53,16 @@ class PromptBuilder:
         """Get system-level instructions."""
         return """# Task: Update Technical Documentation
 
-You are a technical documentation expert. Your task is to update the README.md file to accurately reflect recent code changes. Your goal is to provide clear, descriptive, and helpful documentation, not just a list of code changes."""
+You are a technical documentation expert. Your task is to update the README.md file to accurately reflect recent code changes.
+
+**IMPORTANT RULES:**
+1. You MUST produce a COMPLETE, FULL README — not a truncated or shortened version.
+2. You MUST document what each new/changed module, class, and function does in a clear, descriptive way.
+3. For each new module, add a section describing its purpose, classes, key methods, and usage examples.
+4. Add or update an **API Reference** or **Modules** section that lists all public classes and functions with their signatures, parameters, return types, and descriptions.
+5. Include practical code usage examples (```python blocks) showing how to use the new/changed code.
+6. Do NOT just describe that code was "added" — explain WHAT it does and HOW to use it.
+7. The README should be self-contained: a developer reading it should fully understand the project without reading the source code."""
     
     def _get_current_readme_section(self, readme: str) -> str:
         """Format the current README section."""
@@ -169,10 +178,19 @@ You are a technical documentation expert. Your task is to update the README.md f
         """Get output format instructions."""
         return """## Output Instructions
 
-Provide the updated README.md content in full. Use the following format:
+**CRITICAL: You MUST provide the ENTIRE updated README.md content.** Do NOT truncate, abbreviate, or cut it short.
+The output must be a complete, standalone README that includes ALL existing content PLUS the new documentation.
+
+For new code, you MUST include:
+- A description of what the module/class does
+- Class and function signatures with parameter descriptions
+- At least one usage example with real code
+- Any important notes about behavior (e.g., exceptions raised)
+
+Use the following format:
 
 ```markdown
-[Your updated README content here]
+[Your COMPLETE updated README content here — include EVERYTHING]
 ```
 
 If no changes are needed, respond with: "NO_CHANGES_NEEDED"

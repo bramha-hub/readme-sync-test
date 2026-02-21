@@ -15,7 +15,7 @@ class LLMClient:
         api_key: Optional[str] = None,
         model: str = "models/gemini-2.5-flash",
         temperature: float = 0.3,
-        max_tokens: int = 4096
+        max_tokens: int = 16384
     ):
         """
         Initialize the LLM client.
