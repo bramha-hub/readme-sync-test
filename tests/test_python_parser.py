@@ -1,38 +1,5 @@
 """
-Unit tests for the Python parser.
-"""
-import unittest
-from src.parsers.python_parser import PythonParser
-
-
-class TestPythonParser(unittest.TestCase):
-    """Test cases for Python AST parser."""
-    
-    def setUp(self):
-        """Set up test fixtures."""
-        self.parser = PythonParser()
-    
-    def test_supports_python_files(self):
-        """Test that parser recognizes Python files."""
-        self.assertTrue(self.parser.supports_file("test.py"))
-        self.assertFalse(self.parser.supports_file("test.js"))
-    
-    def test_parse_simple_function(self):
-        """Test parsing a simple function."""
-        code = '''
-def greet(name: str) -> str:
-    """Say hello to someone."""
-    return f"Hello, {name}!"
-'''
-        analysis = self.parser.parse("test.py", code)
-        
-        self.assertEqual(len(analysis.functions), 1)
-        func = analysis.functions[0]
-        self.assertEqual(func.name, "greet")
-        self.assertEqual(len(func.parameters), 1)
-        self.assertEqual(func.return_type, "str")
-        self.assertIn("Say hello", func.docstring)
-    
+Un
     def test_parse_async_function(self):
         """Test parsing async functions."""
         code = '''
